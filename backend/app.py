@@ -30,6 +30,8 @@ DB_PATH = os.path.join(os.path.dirname(__file__), "shadowguard.db")
 
 jwt = JWTManager(app)
 
+init_db()
+
 # ── Database Setup ───────────────────────────────────────────────────────────
 
 def get_db():
@@ -389,9 +391,8 @@ def health():
     return jsonify(status="healthy", service="ShadowGuard Shield Backend", timestamp=datetime.utcnow().isoformat())
 
 # ── Startup ──────────────────────────────────────────────────────────────────
-
+init_db()
 if __name__ == "__main__":
-    init_db()
     port = int(os.environ.get("PORT", 5000))
     print(f"\n🛡️  ShadowGuard Shield Backend running on http://localhost:{port}")
     app.run(host="0.0.0.0", port=port, debug=os.environ.get("FLASK_DEBUG", "false").lower() == "true")
