@@ -3,7 +3,9 @@ import axios from 'axios';
 
 const AuthContext = createContext(null);
 
-const API = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+// const API = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
+const API = 'https://shadowguard-shield-5.onrender.com';
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
