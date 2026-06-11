@@ -30,8 +30,6 @@ DB_PATH = os.path.join(os.path.dirname(__file__), "shadowguard.db")
 
 jwt = JWTManager(app)
 
-init_db()
-
 # ── Database Setup ───────────────────────────────────────────────────────────
 
 def get_db():
