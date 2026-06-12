@@ -25,7 +25,7 @@ CORS(app, origins="*", supports_credentials=True)
 # ── Config ──────────────────────────────────────────────────────────────────
 app.config["JWT_SECRET_KEY"] = os.environ.get("JWT_SECRET", "shadowguard_super_secret_key_2024")
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(days=7)
-AI_SERVICE_URL = os.environ.get("AI_SERVICE_URL", "http://localhost:8000")
+AI_SERVICE_URL = os.environ.get("AI_SERVICE_URL", "https://shadowguard-ai-vdx6.onrender.com")
 DB_PATH = os.path.join(os.path.dirname(__file__), "shadowguard.db")
 
 jwt = JWTManager(app)
