@@ -193,11 +193,31 @@ def analyze():
     if not text:
         return jsonify(success=False, message="Text is required."), 400
 
-    try:
-        ai_resp = requests.post(f"{AI_SERVICE_URL}/analyze", json={"text": text, "user_id": identity["id"], "mode": mode}, timeout=15)
-        ai_result = ai_resp.json()
-    except Exception as e:
-        return jsonify(success=False, message=f"AI service unavailable: {str(e)}"), 503
+   try:
+    ai_resp = requests.post(
+        f"{AI_SERVICE_URL}/analyze",
+        json={
+            "text": text,
+            "user_id": identity["id"],
+            "mode": mode
+        },
+        timeout=15
+    )
+
+    print("AI URL:", f"{AI_SERVICE_URL}/analyze")
+    print("STATUS:", ai_resp.status_code)
+    print("RESPONSE:", ai_resp.text[:500])
+
+    ai_resp.raise_for_status()
+
+    ai_result = ai_resp.json()
+
+except Exception as e:
+    logger.exception("Analyze Error")
+    return jsonify(
+        success=False,
+        message=f"AI service unavailable: {str(e)}"
+    ), 503
 
     analysis_id = str(uuid.uuid4())
     now = datetime.utcnow().isoformat()
