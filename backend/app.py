@@ -185,39 +185,39 @@ def get_me():
 def analyze():
     identity = json.loads(get_jwt_identity())
     data = request.get_json()
+
     text = (data.get("text") or "").strip()
     platform = data.get("platform", "unknown")
     reported_user = data.get("reportedUser")
-    mode = data.get("mode", "hybrid")  # "hybrid", "ai_only", "custom_only"
+    mode = data.get("mode", "hybrid")
 
     if not text:
         return jsonify(success=False, message="Text is required."), 400
 
-   try:
-    ai_resp = requests.post(
-        f"{AI_SERVICE_URL}/analyze",
-        json={
-            "text": text,
-            "user_id": identity["id"],
-            "mode": mode
-        },
-        timeout=15
-    )
+    try:
+        ai_resp = requests.post(
+            f"{AI_SERVICE_URL}/analyze",
+            json={
+                "text": text,
+                "user_id": identity["id"],
+                "mode": mode
+            },
+            timeout=15
+        )
 
-    print("AI URL:", f"{AI_SERVICE_URL}/analyze")
-    print("STATUS:", ai_resp.status_code)
-    print("RESPONSE:", ai_resp.text[:500])
+        print("AI URL:", f"{AI_SERVICE_URL}/analyze")
+        print("STATUS:", ai_resp.status_code)
+        print("RESPONSE:", ai_resp.text[:500])
 
-    ai_resp.raise_for_status()
+        ai_resp.raise_for_status()
+        ai_result = ai_resp.json()
 
-    ai_result = ai_resp.json()
-
-except Exception as e:
-    logger.exception("Analyze Error")
-    return jsonify(
-        success=False,
-        message=f"AI service unavailable: {str(e)}"
-    ), 503
+    except Exception as e:
+        logger.exception("Analyze Error")
+        return jsonify(
+            success=False,
+            message=f"AI service unavailable: {str(e)}"
+        ), 503
 
     analysis_id = str(uuid.uuid4())
     now = datetime.utcnow().isoformat()
@@ -226,23 +226,42 @@ except Exception as e:
     try:
         conn.execute("""
             INSERT INTO analyses
-            (id, user_id, text, platform, reported_user, risk_score, category, is_cyberbullying,
-             model_score, custom_abuse_score, detected_words, source, confidence, explanation, suggestion, analyzed_at)
+            (id, user_id, text, platform, reported_user, risk_score, category,
+             is_cyberbullying, model_score, custom_abuse_score,
+             detected_words, source, confidence, explanation,
+             suggestion, analyzed_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
-            analysis_id, identity["id"], text, platform, reported_user,
-            ai_result.get("risk_score"), ai_result.get("category"),
+            analysis_id,
+            identity["id"],
+            text,
+            platform,
+            reported_user,
+            ai_result.get("risk_score"),
+            ai_result.get("category"),
             1 if ai_result.get("is_cyberbullying") else 0,
-            ai_result.get("model_score"), ai_result.get("custom_abuse_score"),
+            ai_result.get("model_score"),
+            ai_result.get("custom_abuse_score"),
             json.dumps(ai_result.get("detected_words", [])),
-            ai_result.get("source"), ai_result.get("confidence"),
-            ai_result.get("explanation"), ai_result.get("suggestion"), now
+            ai_result.get("source"),
+            ai_result.get("confidence"),
+            ai_result.get("explanation"),
+            ai_result.get("suggestion"),
+            now
         ))
         conn.commit()
+
     finally:
         conn.close()
 
-    return jsonify(success=True, analysis={**ai_result, "id": analysis_id, "analyzedAt": now})
+    return jsonify(
+        success=True,
+        analysis={
+            **ai_result,
+            "id": analysis_id,
+            "analyzedAt": now
+        }
+    )
 
 
 @app.get("/api/analyses")
